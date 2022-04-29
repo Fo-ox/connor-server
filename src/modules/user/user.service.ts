@@ -14,7 +14,7 @@ export class UserService {
     public authorise(login: string, password: string): Promise<SecurityUserDto> {
         return this.usersRepository
             .findOne({ where: { login: login } })
-            .then((user: UserEntity) => user.password === password ? user : null)
+            .then((user: UserEntity) => user?.password === password ? user : null)
     }
 
     public loginIsUnique(login: string): Promise<boolean> {
