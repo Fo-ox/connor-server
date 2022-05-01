@@ -6,3 +6,7 @@ export interface DataModel<T> {
 export interface Error {
     message: string;
 }
+
+export interface Token {
+    access_token: string;
+}
