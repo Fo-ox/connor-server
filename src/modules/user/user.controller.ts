@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { UserService } from "./user.service";
 import { SecurityUserDto, UserDto } from './dto/user.dto';
-import { DataModel } from '../../models/data.model';
+import { DataModel, Token } from '../../models/data.model';
 import { ErrorConstantEnum } from '../../constants/error.constant';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('user')
 export class UserController {
@@ -10,14 +11,15 @@ export class UserController {
     }
 
     @Get('/authorise')
-    authorise(@Query() credentials): Promise<DataModel<SecurityUserDto>> {
+    authorise(@Query() credentials): Promise<DataModel<SecurityUserDto & Token>> {
         return this.userService.authorise(credentials.login, credentials.password)
-            .then((user: SecurityUserDto) => user
-                ? { data: user}
+            .then((user: SecurityUserDto & Token) => user
+                ? { data: user }
                 : { error: { message: ErrorConstantEnum.AUTHORISE_ERROR }
                 });
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('/users')
     getUsers(): Promise<DataModel<SecurityUserDto[]>> {
         return this.userService.getAllUsers()
