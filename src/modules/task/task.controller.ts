@@ -6,6 +6,7 @@ export class TaskController {
 
     @Post('/create')
     createTask(@Body() newTask: TaskDto): any {
+        console.log(newTask);
         return newTask;
     }
 }
