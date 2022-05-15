@@ -14,7 +14,7 @@ ___
 | **typeId**           | `string`  | ID Типа задачи                                                    | 10000                                        |
 | **priorityId**       | `string`  | ID Приоритета задачи                                              | 3                                            |
 | **tags**             | `string`  | Список ключевых условий и этапов выполнения задачи                | Integration, New, Update, Deploy, Refactor   |
-| **reporterId**       | `string`  | ID Репортера задачи                                               | 97296e53-7373-49c6-985d-27c0055d7bbd         |
+| **reporterId**       | `string`  | ID Инициатора задачи                                              | 97296e53-7373-49c6-985d-27c0055d7bbd         |
 | **assigneeId**       | `string`  | ID Исполнителя задачи                                             | 7dc8c306-d8c1-4049-ae1b-4e5e155283bd         |
 | **createDate**       | `string`  | Дата и время создания задачи                                      | 2022-05-15T14:54:49.136+0300                 |
 | **closeDate**        | `string`  | Дата и время перевода задачи в финальный статус                   | 2022-05-15T14:54:49.136+0300                 |
