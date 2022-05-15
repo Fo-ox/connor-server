@@ -8,7 +8,7 @@ export class TaskDto {
     completed?: boolean;
     typeId: string;
     priorityId?: string;
-    tags?: string;
+    tags?: string; // unzip enumerate types
     reporterId?: string;
     assigneeId?: string;
     createDate: string;
@@ -19,3 +19,4 @@ export class TaskDto {
     predictorVersion?: string;
     predictorType?: string;
 }
+
