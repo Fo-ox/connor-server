@@ -2,6 +2,7 @@ export class JiraIntegrationTaskDto {
     id: number;
     key: string;
     fields: {
+        description?: string;
         issuetype: {
             id: number;
             name: string;

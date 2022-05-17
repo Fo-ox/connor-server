@@ -1,5 +1,5 @@
 export class TaskDto {
-    id: string;
+    id?: string;
     internalSystemId?: string;
     name: string;
     description?: string;
