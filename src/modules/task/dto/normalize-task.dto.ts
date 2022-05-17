@@ -1,11 +1,11 @@
 export class NormalizeTaskDto {
     id: string;
-    typeId: string;
-    priorityId?: string;
-    tags?: string; // unzip enumerate types
-    assigneeId?: string;
-    assigneeHardSkillsLevel?: string;
-    createDate: string;
-    initialEstimate?: string;
+    typeId: number;
+    priorityId?: number;
+    assigneeId?: number;
+    assigneeHardSkillsLevel?: number;
+    initialEstimate?: number;
+    resolvedEstimate?: number;
+    tags?: number; // unzip enumerate types
 }
 
