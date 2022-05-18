@@ -3,19 +3,24 @@ import { TaskController } from './task.controller';
 import { TaskService } from './task.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskEntity } from './entities/task-entity';
-import { NormalizeTaskEntity } from './entities/normalize-task-entity';
 import { BullModule } from '@nestjs/bull';
 import { JobProcessor } from '../../jobs/job.processor';
+import { NormalizeTaskService } from './normalize-task.service';
+import { UserModule } from '../user/user.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([TaskEntity]),
-        TypeOrmModule.forFeature([NormalizeTaskEntity]),
         BullModule.registerQueue({
             name: 'connorCore',
-        })
+        }),
+        UserModule
     ],
     controllers: [TaskController],
-    providers: [TaskService, JobProcessor]
+    providers: [
+        TaskService,
+        NormalizeTaskService,
+        JobProcessor,
+    ]
 })
 export class TaskModule {}

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TaskEntity } from './entities/task-entity';
-import { NormalizeTaskEntity } from './entities/normalize-task-entity';
 import { TaskDto } from './dto/task.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { JiraIntegrationTaskDto } from './dto/jira-integration-task.dto';
@@ -11,7 +10,6 @@ import { JiraIntegrationTaskDto } from './dto/jira-integration-task.dto';
 export class TaskService {
     constructor(
         @InjectRepository(TaskEntity) private tasksRepository: Repository<TaskEntity>,
-        @InjectRepository(NormalizeTaskEntity) private datasetRepository: Repository<NormalizeTaskEntity>,
     ) {
     }
 
@@ -39,8 +37,18 @@ export class TaskService {
             .then((task: TaskEntity) => !task)
     }
 
+    public taskIsUnique(id: string | number): Promise<boolean> {
+        return this.tasksRepository
+            .findOne(id)
+            .then((task: TaskEntity) => !task)
+    }
+
     public getTaskById(id: string): Promise<TaskDto> {
         return this.tasksRepository.findOne(id)
+    }
+
+    public getAllTasks(): Promise<TaskDto[]> {
+        return this.tasksRepository.find();
     }
 
     public convertJiraTaskToTask(jiraTask: JiraIntegrationTaskDto): TaskDto {
@@ -62,7 +70,7 @@ export class TaskService {
             createDate: new Date(jiraTask.fields?.created)?.toISOString(),
             closeDate: new Date(jiraTask.fields?.resolutiondate)?.toISOString(),
             initialEstimate: jiraTask.fields?.customfield_10029?.value,
-            resolvedEstimate: +(jiraTask.fields?.timetracking.timeSpentSeconds * 3600)?.toFixed(),
+            resolvedEstimate: +(jiraTask.fields?.timetracking.timeSpentSeconds / 3600)?.toFixed(),
         }
     }
 
