@@ -4,9 +4,6 @@ import { TaskService } from './task.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskEntity } from './entities/task-entity';
 import { BullModule } from '@nestjs/bull';
-import { JobProcessor } from '../../jobs/job.processor';
-import { NormalizeTaskService } from './normalize-task.service';
-import { UserModule } from '../user/user.module';
 
 @Module({
     imports: [
@@ -14,13 +11,11 @@ import { UserModule } from '../user/user.module';
         BullModule.registerQueue({
             name: 'connorCore',
         }),
-        UserModule
     ],
     controllers: [TaskController],
     providers: [
         TaskService,
-        NormalizeTaskService,
-        JobProcessor,
-    ]
+    ],
+    exports: [TaskService]
 })
 export class TaskModule {}

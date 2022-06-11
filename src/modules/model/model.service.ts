@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import { TaskEntity } from './entities/task-entity';
 import { SecurityUserDto } from '../user/dto/user.dto';
 import { DatasetColumnsKey, NORMALIZE_MAX, NORMALIZE_MIN } from '../../constants/dataset.constants';
-import { TaskService } from './task.service';
 import { RandomForestRegression as RFRegression } from 'ml-random-forest';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const KNN = require("ml-knn/lib/index.js")
-import { ModelDto } from '../models/dto/model.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskDto } from './dto/task.dto';
+import { TaskService } from '../task/task.service';
+import { ModelDto } from './dto/model.dto';
+import { TaskDto } from '../task/dto/task.dto';
+import { TaskEntity } from '../task/entities/task-entity';
 
 @Injectable()
-export class NormalizeTaskService {
+export class ModelService {
     constructor(
         private tasksService: TaskService,
         private userService: UserService,
@@ -143,7 +143,6 @@ export class NormalizeTaskService {
             this.labels.push(task.resolvedEstimate)
         })
     }
-
 
     private trainModel(modelType: string): ModelDto {
         console.log(modelType);

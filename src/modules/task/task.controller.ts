@@ -91,12 +91,4 @@ export class TaskController {
             .catch(() => ({ error: { message: ErrorConstantEnum.UPDATED_ERROR } }));
     }
 
-    @Get('/train')
-    trainModel(@Query() modelType): Promise<any> {
-        console.log('train controller')
-        return this.estimateQueue.add('trainModel', {
-            modelType: modelType?.modelType
-        })
-    }
-
 }
