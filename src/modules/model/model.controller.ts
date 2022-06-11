@@ -1,4 +1,4 @@
-import { Controller, forwardRef, Get, Inject, Query } from '@nestjs/common';
+import { Controller, forwardRef, Get, Inject, Query, UseGuards } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Job, Queue } from 'bull';
 import { ModelService } from './model.service';
@@ -7,6 +7,7 @@ import { DataModel } from '../../models/data.model';
 import { ErrorConstantEnum } from '../../constants/error.constant';
 import { TaskService } from '../task/task.service';
 import { TaskDto } from '../task/dto/task.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('model')
 export class ModelController {
@@ -17,20 +18,22 @@ export class ModelController {
     ) {
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('/train')
     trainModel(@Query() modelType): Promise<any> {
-        console.log('train controller')
         return this.estimateQueue.add('trainModel', {
             modelType: modelType?.modelType
-        })
+        }).then(() => ({data: 'Successfully started'}))
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('/models')
     getModels(): Promise<DataModel<ModelDto[]>> {
         return this.modelService.getModels()
             .then((models: ModelDto[]) => ({data: models}));
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('/defaultModel')
     getDefaultModel(@Query() params): Promise<DataModel<ModelDto>> {
         return params.id
@@ -43,6 +46,7 @@ export class ModelController {
                 .then((model) => ({data: model}))
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('/predict')
     predictById(@Query() params): Promise<DataModel<TaskDto>> {
         return this.taskService.getTaskById(params.taskId)

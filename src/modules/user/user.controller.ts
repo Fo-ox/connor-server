@@ -26,6 +26,14 @@ export class UserController {
             .then((users: SecurityUserDto[]) => ({data: users}));
     }
 
+    @UseGuards(AuthGuard('jwt'))
+    @Get('/user')
+    getUserById(@Query() params): Promise<DataModel<SecurityUserDto>> {
+        return this.userService.getUserById(params.id)
+            .then((user: SecurityUserDto) => ({data: user}));
+    }
+
+    @UseGuards(AuthGuard('jwt'))
     @Post('/create')
     createUser(@Body() newUser: UserDto): Promise<DataModel<SecurityUserDto>> {
         return this.userService.loginIsUnique(newUser.login)
@@ -34,5 +42,16 @@ export class UserController {
                 : Promise.reject())
             .then((createdUser: SecurityUserDto) => ({data: createdUser}))
             .catch(() => ({ error: { message: ErrorConstantEnum.LOGIN_ALREADY_USE } }));
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('/update')
+    updateUser(@Body() newUser: UserDto): Promise<DataModel<SecurityUserDto>> {
+        return this.userService.getUserById(newUser.id)
+            .then((user: UserDto) => user
+                ? this.userService.updateUserById(newUser.id, {...user, ...newUser})
+                : Promise.reject())
+            .then((updatedUser: SecurityUserDto) => ({data: updatedUser}))
+            .catch(() => ({ error: { message: ErrorConstantEnum.UPDATED_ERROR } }));
     }
 }

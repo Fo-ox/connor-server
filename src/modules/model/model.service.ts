@@ -10,7 +10,6 @@ import { TaskService } from '../task/task.service';
 import { ModelDto } from './dto/model.dto';
 import { TaskDto } from '../task/dto/task.dto';
 import { TaskEntity } from '../task/entities/task-entity';
-import { Mode } from 'fs';
 
 @Injectable()
 export class ModelService {
@@ -116,11 +115,6 @@ export class ModelService {
                     .then((users: SecurityUserDto[]) => {
 
                         this.buildDataset(tasks, users);
-
-                        console.log(this.datasetContract);
-                        console.log(this.dataset);
-                        console.log(this.labels);
-
                         this.trainModel(modelType);
                     })
             })
@@ -179,15 +173,11 @@ export class ModelService {
     }
 
     private trainModel(modelType: string): ModelDto {
-        console.log(modelType);
         const options = {
             seed: 42,
             replacement: true,
             nEstimators: 100
         };
-
-        console.log(this.dataset.length);
-        console.log(this.labels.length);
 
         const regression = new RFRegression(options);
         regression.train(this.dataset, this.labels);

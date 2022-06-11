@@ -1,4 +1,4 @@
-import { Body, Controller, forwardRef, Get, Inject, Post, Query } from '@nestjs/common';
+import { Body, Controller, forwardRef, Get, Inject, Post, Query, UseGuards } from '@nestjs/common';
 import { TaskDto } from './dto/task.dto';
 import { DataModel } from '../../models/data.model';
 import { TaskService } from './task.service';
@@ -8,6 +8,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { ModelService } from '../model/model.service';
 import { ModelDto } from '../model/dto/model.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('task')
 export class TaskController {
@@ -19,21 +20,28 @@ export class TaskController {
     ) {
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('/task')
-    getTaskById(@Query() params): Promise<TaskDto> {
+    getTaskById(@Query() params): Promise<DataModel<TaskDto>> {
         return this.taskService.getTaskById(params.id)
+            .then((task: TaskDto) => ({data: task}))
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('/tasks')
-    getTaskAllTasks(@Query() params): Promise<TaskDto[]> {
+    getTaskAllTasks(@Query() params): Promise<DataModel<TaskDto[]>> {
         return this.taskService.getAllTasks(params)
+            .then((tasks: TaskDto[]) => ({data: tasks}))
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('/totalCount')
-    getTaskAllTasksCount(): Promise<number> {
+    getTaskAllTasksCount(): Promise<DataModel<number>> {
         return this.taskService.getTasksCount()
+            .then((count: number) => ({data: count}))
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Post('/create')
     createTask(@Body() newTask: TaskDto): Promise<DataModel<TaskDto>> {
         return this.taskService.taskIsUnique(newTask.id)
@@ -52,6 +60,7 @@ export class TaskController {
             .catch(() => ({ error: { message: ErrorConstantEnum.CREATED_ID_ALREADY_USE } }));
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Post('/update')
     updateTask(@Body() updatedTask: TaskDto): Promise<DataModel<TaskDto>> {
         return this.taskService.getTaskById(updatedTask.id)

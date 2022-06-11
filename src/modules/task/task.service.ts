@@ -52,7 +52,6 @@ export class TaskService {
     }
 
     public updateTaskById(id: string, newData: TaskDto): Promise<TaskDto> {
-        console.log(newData);
         return this.tasksRepository
             .update({id}, newData)
             .then(() => this.getTaskById(id))

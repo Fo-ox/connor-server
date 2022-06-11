@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskEntity } from './entities/task-entity';
 import { BullModule } from '@nestjs/bull';
 import { ModelModule } from '../model/model.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
     imports: [
@@ -13,6 +14,7 @@ import { ModelModule } from '../model/model.module';
             name: 'connorCore',
         }),
         forwardRef(() => ModelModule),
+        UserModule,
     ],
     controllers: [TaskController],
     providers: [
