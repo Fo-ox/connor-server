@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { TaskDto } from './dto/task.dto';
 import { DataModel } from '../../models/data.model';
 import { TaskService } from './task.service';
@@ -21,6 +21,12 @@ export class TaskController {
     @Get()
     getState(): any {
         return this.JIRA_AUTOMATION
+    }
+
+    @Get('/task/:id')
+    getTaskById(@Param('id') id: string): Promise<TaskDto> {
+        console.log('get by id');
+        return this.taskService.getTaskById(id)
     }
 
     @Post('/create')
@@ -52,4 +58,13 @@ export class TaskController {
             })
             .catch(() => ({ error: { message: ErrorConstantEnum.INTEGRATION_ID_ALREADY_USE } }));
     }
+
+    @Get('/train')
+    trainModel(@Query() modelType): Promise<any> {
+        console.log('train controller')
+        return this.estimateQueue.add('trainModel', {
+            modelType: modelType?.modelType
+        })
+    }
+
 }

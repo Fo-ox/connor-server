@@ -47,6 +47,13 @@ export class TaskService {
         return this.tasksRepository.findOne(id)
     }
 
+    public updateTaskById(id: string, newData: TaskDto): Promise<TaskDto> {
+        console.log(newData);
+        return this.tasksRepository
+            .update({id}, newData)
+            .then(() => this.getTaskById(id))
+    }
+
     public getAllTasks(): Promise<TaskDto[]> {
         return this.tasksRepository.find();
     }

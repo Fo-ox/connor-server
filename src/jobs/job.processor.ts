@@ -12,6 +12,14 @@ export class JobProcessor {
 
     @Process('predictEstimate')
     async handleEstimate(job: Job) {
-        this.normalizeTaskService.buildDataset();
+        console.log(`start predict for ${job.data?.task?.id}`);
+        this.normalizeTaskService.predictEstimate(job.data?.task, job.data?.modelType || 'randomForest');
+    }
+
+    @Process('trainModel')
+    async handleTrainModel(job: Job) {
+        console.log('start training');
+        console.log(job.data?.modelType)
+        this.normalizeTaskService.createNewModel(job.data?.modelType);
     }
 }
