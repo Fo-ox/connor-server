@@ -58,9 +58,7 @@ export class TaskService {
     }
 
     public getAllTasks(params?: {limit?: number, offset?: number, filter?: string}): Promise<TaskDto[]> {
-        if (!params) {
-            return this.tasksRepository.find();
-        }
+        return this.tasksRepository.find();
     }
 
     public getTasksCount(): Promise<number> {
