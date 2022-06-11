@@ -2,7 +2,7 @@ import { Controller, forwardRef, Get, Inject, Query, UseGuards } from '@nestjs/c
 import { InjectQueue } from '@nestjs/bull';
 import { Job, Queue } from 'bull';
 import { ModelService } from './model.service';
-import { ModelDto } from './dto/model.dto';
+import { ModelDto, ModelTypesEnum } from './dto/model.dto';
 import { DataModel } from '../../models/data.model';
 import { ErrorConstantEnum } from '../../constants/error.constant';
 import { TaskService } from '../task/task.service';
@@ -20,10 +20,15 @@ export class ModelController {
 
     @UseGuards(AuthGuard('jwt'))
     @Get('/train')
-    trainModel(@Query() modelType): Promise<any> {
+    trainModel(@Query() parameters): Promise<any> {
+        if (parameters.modelType !== ModelTypesEnum.LINEAR_REGRESSION && parameters.modelType !== ModelTypesEnum.RANDOM_FOREST) {
+            return Promise.resolve(true)
+                .then(() => ({ error: { message: ErrorConstantEnum.INVALID_MODEL } }))
+        }
+
         return this.estimateQueue.add('trainModel', {
-            modelType: modelType?.modelType
-        }).then(() => ({data: 'Successfully started'}))
+            modelType: parameters?.modelType
+        }).then(() => ({data: `Successfully started train ${parameters?.modelType} model`}))
     }
 
     @UseGuards(AuthGuard('jwt'))

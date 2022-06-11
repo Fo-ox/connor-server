@@ -1,5 +1,6 @@
 export class SecurityUserDto {
     readonly id: string;
+    readonly externalSystemId: string;
     readonly role: string;
     readonly firstName: string;
     readonly lastName: string;

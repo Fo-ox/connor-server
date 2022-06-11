@@ -78,6 +78,7 @@ export class UserService {
     public static getSecurityUser(user: UserDto): SecurityUserDto {
         return {
             id: user?.id,
+            externalSystemId: user?.externalSystemId,
             role: user?.role,
             lastName: user?.lastName,
             firstName: user?.firstName,
