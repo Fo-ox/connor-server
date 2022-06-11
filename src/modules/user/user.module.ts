@@ -23,6 +23,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     ],
     controllers: [UserController],
     providers: [UserService, JwtStrategy],
-    exports: [UserService]
+    exports: [UserService, JwtStrategy]
 })
 export class UserModule {}

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, forwardRef, Get, Inject, Post, Query, UseGuards } from '@nestjs/common';
 import { TaskDto } from './dto/task.dto';
 import { DataModel } from '../../models/data.model';
 import { TaskService } from './task.service';
@@ -6,6 +6,9 @@ import { JiraIntegrationTaskDto } from './dto/jira-integration-task.dto';
 import { ErrorConstantEnum } from '../../constants/error.constant';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { ModelService } from '../model/model.service';
+import { ModelDto } from '../model/dto/model.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('task')
 export class TaskController {
@@ -13,22 +16,32 @@ export class TaskController {
     constructor(
         @InjectQueue('connorCore') private estimateQueue: Queue,
         private taskService: TaskService,
+        @Inject(forwardRef(() => ModelService)) private modelService: ModelService,
     ) {
     }
 
-    private JIRA_AUTOMATION;
-
-    @Get()
-    getState(): any {
-        return this.JIRA_AUTOMATION
+    @UseGuards(AuthGuard('jwt'))
+    @Get('/task')
+    getTaskById(@Query() params): Promise<DataModel<TaskDto>> {
+        return this.taskService.getTaskById(params.id)
+            .then((task: TaskDto) => ({data: task}))
     }
 
-    @Get('/task/:id')
-    getTaskById(@Param('id') id: string): Promise<TaskDto> {
-        console.log('get by id');
-        return this.taskService.getTaskById(id)
+    @UseGuards(AuthGuard('jwt'))
+    @Get('/tasks')
+    getTaskAllTasks(@Query() params): Promise<DataModel<TaskDto[]>> {
+        return this.taskService.getAllTasks(params)
+            .then((tasks: TaskDto[]) => ({data: tasks}))
     }
 
+    @UseGuards(AuthGuard('jwt'))
+    @Get('/totalCount')
+    getTaskAllTasksCount(): Promise<DataModel<number>> {
+        return this.taskService.getTasksCount()
+            .then((count: number) => ({data: count}))
+    }
+
+    @UseGuards(AuthGuard('jwt'))
     @Post('/create')
     createTask(@Body() newTask: TaskDto): Promise<DataModel<TaskDto>> {
         return this.taskService.taskIsUnique(newTask.id)
@@ -36,35 +49,70 @@ export class TaskController {
                 ? this.taskService.createTask(newTask)
                 : Promise.reject())
             .then((createdTask: TaskDto) => {
-                !createdTask.completed && this.estimateQueue.add( 'predictEstimate',{
-                    task: createdTask
-                })
+                this.modelService.getDefaultModel()
+                    .then((model: ModelDto) => model
+                        && !createdTask.completed
+                        && this.estimateQueue.add( 'predictEstimate',{
+                            task: createdTask
+                        }))
                 return {data: createdTask}
             })
+            .catch(() => ({ error: { message: ErrorConstantEnum.CREATED_ID_ALREADY_USE } }));
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('/update')
+    updateTask(@Body() updatedTask: TaskDto): Promise<DataModel<TaskDto>> {
+        return this.taskService.getTaskById(updatedTask.id)
+            .then((task: TaskDto) => task
+                ? this.taskService.updateTaskById(task.id, {...task, ...updatedTask})
+                : Promise.reject())
+            .then((processedTask: TaskDto) => {
+                this.modelService.getDefaultModel()
+                    .then((model: ModelDto) => model
+                        && !processedTask.completed
+                        && this.estimateQueue.add( 'predictEstimate',{
+                            task: processedTask
+                        }))
+                return {data: processedTask}
+            })
+            .catch(() => ({ error: { message: ErrorConstantEnum.UPDATED_ERROR } }));
     }
 
     @Post('/create/jira')
     createTaskFromJira(@Body() newTask: JiraIntegrationTaskDto): Promise<DataModel<TaskDto>> {
-        this.JIRA_AUTOMATION = newTask;
         return this.taskService.integrationTaskIsUnique(newTask.id)
             .then((isUnique: boolean) => isUnique
                 ? this.taskService.createTask(this.taskService.convertJiraTaskToTask(newTask))
                 : Promise.reject())
             .then((createdTask: TaskDto) => {
-                this.estimateQueue.add( 'predictEstimate', {
-                    task: createdTask
-                })
+                this.modelService.getDefaultModel()
+                    .then((model: ModelDto) => model
+                        && !createdTask.completed
+                        && this.estimateQueue.add( 'predictEstimate',{
+                            task: createdTask
+                        }))
                 return {data: createdTask}
             })
             .catch(() => ({ error: { message: ErrorConstantEnum.INTEGRATION_ID_ALREADY_USE } }));
     }
 
-    @Get('/train')
-    trainModel(@Query() modelType): Promise<any> {
-        console.log('train controller')
-        return this.estimateQueue.add('trainModel', {
-            modelType: modelType?.modelType
-        })
+    @Post('/update/jira')
+    updateTaskFromJira(@Body() updatedTask: JiraIntegrationTaskDto): Promise<DataModel<TaskDto>> {
+        return this.taskService.getTaskByIntegrationId(TaskService.getJiraInternalId(updatedTask))
+            .then((task: TaskDto) => task
+                ? this.taskService.updateTaskById(task.id, {...task, ...this.taskService.convertJiraTaskToTask(updatedTask)})
+                : Promise.reject())
+            .then((processedTask: TaskDto) => {
+                this.modelService.getDefaultModel()
+                    .then((model: ModelDto) => model
+                        && !processedTask.completed
+                        && this.estimateQueue.add( 'predictEstimate',{
+                            task: processedTask
+                        }))
+                return {data: processedTask}
+            })
+            .catch(() => ({ error: { message: ErrorConstantEnum.UPDATED_ERROR } }));
     }
 
 }

@@ -1,11 +1,10 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TaskController } from './task.controller';
 import { TaskService } from './task.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskEntity } from './entities/task-entity';
 import { BullModule } from '@nestjs/bull';
-import { JobProcessor } from '../../jobs/job.processor';
-import { NormalizeTaskService } from './normalize-task.service';
+import { ModelModule } from '../model/model.module';
 import { UserModule } from '../user/user.module';
 
 @Module({
@@ -14,13 +13,13 @@ import { UserModule } from '../user/user.module';
         BullModule.registerQueue({
             name: 'connorCore',
         }),
-        UserModule
+        forwardRef(() => ModelModule),
+        UserModule,
     ],
     controllers: [TaskController],
     providers: [
-        TaskService,
-        NormalizeTaskService,
-        JobProcessor,
-    ]
+        TaskService
+    ],
+    exports: [TaskService]
 })
 export class TaskModule {}

@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import { TaskEntity } from './entities/task-entity';
 import { SecurityUserDto } from '../user/dto/user.dto';
 import { DatasetColumnsKey, NORMALIZE_MAX, NORMALIZE_MIN } from '../../constants/dataset.constants';
-import { TaskService } from './task.service';
 import { RandomForestRegression as RFRegression } from 'ml-random-forest';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const KNN = require("ml-knn/lib/index.js")
-import { ModelDto } from '../models/dto/model.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskDto } from './dto/task.dto';
+import { TaskService } from '../task/task.service';
+import { ModelDto } from './dto/model.dto';
+import { TaskDto } from '../task/dto/task.dto';
+import { TaskEntity } from '../task/entities/task-entity';
 
 @Injectable()
-export class NormalizeTaskService {
+export class ModelService {
     constructor(
         private tasksService: TaskService,
         private userService: UserService,
@@ -24,7 +24,40 @@ export class NormalizeTaskService {
     private labels: Array<number> = [];
 
     private modelsState: ModelDto[] = [];
+    private defaultModelId: string;
     private versionMap: Record<string, number> = {};
+
+    public getModels(): Promise<ModelDto[]> {
+        return Promise.resolve(true)
+            .then(() => [...this.modelsState?.map((model: ModelDto) => ({
+                id: model.id,
+                type: model.type,
+                version: model.version,
+            }))]);
+    }
+
+    public setDefaultModel(defaultId: string): Promise<ModelDto> {
+        this.defaultModelId = defaultId
+        return Promise.resolve(true)
+            .then(() => this.getModelById(defaultId));
+    }
+
+    public getDefaultModel(): Promise<ModelDto> {
+        return this.getModelById(this.defaultModelId);
+    }
+
+    public getModelById(id: string): Promise<ModelDto> {
+        return Promise.resolve(true)
+            .then(() => this.modelsState.find((model: ModelDto) => model.id === id))
+            .then((findModel: ModelDto) => findModel
+                ? {
+                    id: findModel.id,
+                    type: findModel.type,
+                    version: findModel.version
+                }
+                : null
+            )
+    }
 
     public predictEstimate(task: TaskDto, modelType: string): void {
         const model: ModelDto = this.modelsState
@@ -67,7 +100,7 @@ export class NormalizeTaskService {
 
     private getNextModelVersion(modelType: string): number {
         return this.versionMap?.[modelType]
-            ? this.versionMap[modelType]++
+            ? ++this.versionMap[modelType]
             : this.versionMap[modelType] = 1
     }
 
@@ -82,11 +115,6 @@ export class NormalizeTaskService {
                     .then((users: SecurityUserDto[]) => {
 
                         this.buildDataset(tasks, users);
-
-                        console.log(this.datasetContract);
-                        console.log(this.dataset);
-                        console.log(this.labels);
-
                         this.trainModel(modelType);
                     })
             })
@@ -144,17 +172,12 @@ export class NormalizeTaskService {
         })
     }
 
-
     private trainModel(modelType: string): ModelDto {
-        console.log(modelType);
         const options = {
             seed: 42,
             replacement: true,
             nEstimators: 100
         };
-
-        console.log(this.dataset.length);
-        console.log(this.labels.length);
 
         const regression = new RFRegression(options);
         regression.train(this.dataset, this.labels);
@@ -168,7 +191,7 @@ export class NormalizeTaskService {
         };
 
         this.modelsState.push(model)
-        console.log(this.modelsState);
+        !this.defaultModelId && (this.setDefaultModel(model.id));
 
         return model;
 

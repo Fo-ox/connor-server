@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './modules/user/user.module';
 import { TaskModule } from './modules/task/task.module';
 import { BullModule } from '@nestjs/bull';
+import { ModelModule } from './modules/model/model.module';
 
 @Module({
     imports: [
@@ -29,6 +30,7 @@ import { BullModule } from '@nestjs/bull';
         }),
         UserModule,
         TaskModule,
+        ModelModule,
     ],
     controllers: [AppController],
     providers: [AppService],

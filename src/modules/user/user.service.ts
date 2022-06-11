@@ -69,6 +69,12 @@ export class UserService {
             );
     }
 
+    public updateUserById(id: string, newData: UserDto): Promise<SecurityUserDto> {
+        return this.usersRepository
+            .update({id}, newData)
+            .then(() => this.getUserById(id))
+    }
+
     public static getSecurityUser(user: UserDto): SecurityUserDto {
         return {
             id: user?.id,
