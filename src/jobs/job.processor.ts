@@ -10,7 +10,7 @@ export class JobProcessor {
 
     @Process('predictEstimate')
     async handleEstimate(job: Job) {
-        this.modelService.predictEstimate(job.data?.task, job.data?.modelType || 'randomForest');
+        this.modelService.predictEstimate(job.data?.task);
     }
 
     @Process('trainModel')
