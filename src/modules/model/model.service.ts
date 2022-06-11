@@ -10,6 +10,7 @@ import { TaskService } from '../task/task.service';
 import { ModelDto } from './dto/model.dto';
 import { TaskDto } from '../task/dto/task.dto';
 import { TaskEntity } from '../task/entities/task-entity';
+import { Mode } from 'fs';
 
 @Injectable()
 export class ModelService {
@@ -24,7 +25,40 @@ export class ModelService {
     private labels: Array<number> = [];
 
     private modelsState: ModelDto[] = [];
+    private defaultModelId: string;
     private versionMap: Record<string, number> = {};
+
+    public getModels(): Promise<ModelDto[]> {
+        return Promise.resolve(true)
+            .then(() => [...this.modelsState?.map((model: ModelDto) => ({
+                id: model.id,
+                type: model.type,
+                version: model.version,
+            }))]);
+    }
+
+    public setDefaultModel(defaultId: string): Promise<ModelDto> {
+        this.defaultModelId = defaultId
+        return Promise.resolve(true)
+            .then(() => this.getModelById(defaultId));
+    }
+
+    public getDefaultModel(): Promise<ModelDto> {
+        return this.getModelById(this.defaultModelId);
+    }
+
+    public getModelById(id: string): Promise<ModelDto> {
+        return Promise.resolve(true)
+            .then(() => this.modelsState.find((model: ModelDto) => model.id === id))
+            .then((findModel: ModelDto) => findModel
+                ? {
+                    id: findModel.id,
+                    type: findModel.type,
+                    version: findModel.version
+                }
+                : null
+            )
+    }
 
     public predictEstimate(task: TaskDto, modelType: string): void {
         const model: ModelDto = this.modelsState
@@ -67,7 +101,7 @@ export class ModelService {
 
     private getNextModelVersion(modelType: string): number {
         return this.versionMap?.[modelType]
-            ? this.versionMap[modelType]++
+            ? ++this.versionMap[modelType]
             : this.versionMap[modelType] = 1
     }
 
@@ -167,7 +201,7 @@ export class ModelService {
         };
 
         this.modelsState.push(model)
-        console.log(this.modelsState);
+        !this.defaultModelId && (this.setDefaultModel(model.id));
 
         return model;
 

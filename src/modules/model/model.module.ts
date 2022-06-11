@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ModelController } from './model.controller';
 import { ModelService } from './model.service';
 import { TaskModule } from '../task/task.module';
@@ -12,7 +12,7 @@ import { UserModule } from '../user/user.module';
             name: 'connorCore',
         }),
         UserModule,
-        TaskModule,
+        forwardRef(() => TaskModule),
     ],
     controllers: [ModelController],
     providers: [

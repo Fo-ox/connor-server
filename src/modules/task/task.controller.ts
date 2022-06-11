@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, forwardRef, Get, Inject, Post, Query } from '@nestjs/common';
 import { TaskDto } from './dto/task.dto';
 import { DataModel } from '../../models/data.model';
 import { TaskService } from './task.service';
@@ -6,6 +6,8 @@ import { JiraIntegrationTaskDto } from './dto/jira-integration-task.dto';
 import { ErrorConstantEnum } from '../../constants/error.constant';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { ModelService } from '../model/model.service';
+import { ModelDto } from '../model/dto/model.dto';
 
 @Controller('task')
 export class TaskController {
@@ -13,6 +15,7 @@ export class TaskController {
     constructor(
         @InjectQueue('connorCore') private estimateQueue: Queue,
         private taskService: TaskService,
+        @Inject(forwardRef(() => ModelService)) private modelService: ModelService,
     ) {
     }
 
@@ -38,9 +41,12 @@ export class TaskController {
                 ? this.taskService.createTask(newTask)
                 : Promise.reject())
             .then((createdTask: TaskDto) => {
-                !createdTask.completed && this.estimateQueue.add( 'predictEstimate',{
-                    task: createdTask
-                })
+                this.modelService.getDefaultModel()
+                    .then((model: ModelDto) => model
+                        && !createdTask.completed
+                        && this.estimateQueue.add( 'predictEstimate',{
+                            task: createdTask
+                        }))
                 return {data: createdTask}
             })
             .catch(() => ({ error: { message: ErrorConstantEnum.CREATED_ID_ALREADY_USE } }));
@@ -53,9 +59,12 @@ export class TaskController {
                 ? this.taskService.updateTaskById(task.id, {...task, ...updatedTask})
                 : Promise.reject())
             .then((processedTask: TaskDto) => {
-                !processedTask.completed && this.estimateQueue.add( 'predictEstimate',{
-                    task: processedTask
-                })
+                this.modelService.getDefaultModel()
+                    .then((model: ModelDto) => model
+                        && !processedTask.completed
+                        && this.estimateQueue.add( 'predictEstimate',{
+                            task: processedTask
+                        }))
                 return {data: processedTask}
             })
             .catch(() => ({ error: { message: ErrorConstantEnum.UPDATED_ERROR } }));
@@ -68,9 +77,12 @@ export class TaskController {
                 ? this.taskService.createTask(this.taskService.convertJiraTaskToTask(newTask))
                 : Promise.reject())
             .then((createdTask: TaskDto) => {
-                !createdTask.completed && this.estimateQueue.add( 'predictEstimate', {
-                    task: createdTask
-                })
+                this.modelService.getDefaultModel()
+                    .then((model: ModelDto) => model
+                        && !createdTask.completed
+                        && this.estimateQueue.add( 'predictEstimate',{
+                            task: createdTask
+                        }))
                 return {data: createdTask}
             })
             .catch(() => ({ error: { message: ErrorConstantEnum.INTEGRATION_ID_ALREADY_USE } }));
@@ -83,9 +95,12 @@ export class TaskController {
                 ? this.taskService.updateTaskById(task.id, {...task, ...this.taskService.convertJiraTaskToTask(updatedTask)})
                 : Promise.reject())
             .then((processedTask: TaskDto) => {
-                !processedTask.completed && this.estimateQueue.add( 'predictEstimate', {
-                    task: processedTask
-                })
+                this.modelService.getDefaultModel()
+                    .then((model: ModelDto) => model
+                        && !processedTask.completed
+                        && this.estimateQueue.add( 'predictEstimate',{
+                            task: processedTask
+                        }))
                 return {data: processedTask}
             })
             .catch(() => ({ error: { message: ErrorConstantEnum.UPDATED_ERROR } }));
