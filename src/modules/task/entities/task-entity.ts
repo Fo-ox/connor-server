@@ -5,8 +5,8 @@ export class TaskEntity {
     @PrimaryColumn()
         id: string;
 
-    @Column({unique: true})
-        internalSystemId: string;
+    @Column({unique: true, nullable: true})
+        externalSystemId: string;
 
     @Column()
         name: string;

@@ -72,7 +72,7 @@ export class TaskService {
             return;
         }
         return {
-            internalSystemId: TaskService.getJiraInternalId(jiraTask),
+            externalSystemId: TaskService.getJiraInternalId(jiraTask),
             name: jiraTask.fields?.summary,
             description: jiraTask.fields?.description,
             projectId: jiraTask.fields?.project?.key,

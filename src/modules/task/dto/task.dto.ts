@@ -1,6 +1,6 @@
 export class TaskDto {
     id?: string;
-    internalSystemId?: string;
+    externalSystemId?: string;
     name: string;
     description?: string;
     projectId: string;

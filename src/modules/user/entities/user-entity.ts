@@ -5,6 +5,9 @@ export class UserEntity {
     @PrimaryColumn()
         id: string;
 
+    @Column({unique: true, nullable: true})
+        externalSystemId: string;
+
     @Column()
         login: string;
 
