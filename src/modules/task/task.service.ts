@@ -47,6 +47,10 @@ export class TaskService {
         return this.tasksRepository.findOne(id)
     }
 
+    public getTaskByIntegrationId(internalId: string): Promise<TaskDto> {
+        return this.tasksRepository.findOne({ where: { internalSystemId: internalId } })
+    }
+
     public updateTaskById(id: string, newData: TaskDto): Promise<TaskDto> {
         console.log(newData);
         return this.tasksRepository
@@ -54,8 +58,14 @@ export class TaskService {
             .then(() => this.getTaskById(id))
     }
 
-    public getAllTasks(): Promise<TaskDto[]> {
-        return this.tasksRepository.find();
+    public getAllTasks(params?: {limit?: number, offset?: number, filter?: string}): Promise<TaskDto[]> {
+        if (!params) {
+            return this.tasksRepository.find();
+        }
+    }
+
+    public getTasksCount(): Promise<number> {
+        return this.tasksRepository.count();
     }
 
     public convertJiraTaskToTask(jiraTask: JiraIntegrationTaskDto): TaskDto {
@@ -63,7 +73,7 @@ export class TaskService {
             return;
         }
         return {
-            internalSystemId: `${jiraTask.key}/${jiraTask.id}`,
+            internalSystemId: TaskService.getJiraInternalId(jiraTask),
             name: jiraTask.fields?.summary,
             description: jiraTask.fields?.description,
             projectId: jiraTask.fields?.project?.key,
@@ -79,6 +89,10 @@ export class TaskService {
             initialEstimate: jiraTask.fields?.customfield_10029?.value,
             resolvedEstimate: +(jiraTask.fields?.timetracking.timeSpentSeconds / 3600)?.toFixed(),
         }
+    }
+
+    public static getJiraInternalId(jiraTask: JiraIntegrationTaskDto): string {
+        return `${jiraTask.key}/${jiraTask.id}`
     }
 
 }

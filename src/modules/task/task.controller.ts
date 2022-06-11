@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { TaskDto } from './dto/task.dto';
 import { DataModel } from '../../models/data.model';
 import { TaskService } from './task.service';
@@ -16,17 +16,19 @@ export class TaskController {
     ) {
     }
 
-    private JIRA_AUTOMATION;
-
-    @Get()
-    getState(): any {
-        return this.JIRA_AUTOMATION
+    @Get('/task')
+    getTaskById(@Query() params): Promise<TaskDto> {
+        return this.taskService.getTaskById(params.id)
     }
 
-    @Get('/task/:id')
-    getTaskById(@Param('id') id: string): Promise<TaskDto> {
-        console.log('get by id');
-        return this.taskService.getTaskById(id)
+    @Get('/tasks')
+    getTaskAllTasks(@Query() params): Promise<TaskDto[]> {
+        return this.taskService.getAllTasks(params)
+    }
+
+    @Get('/totalCount')
+    getTaskAllTasksCount(): Promise<number> {
+        return this.taskService.getTasksCount()
     }
 
     @Post('/create')
@@ -41,22 +43,52 @@ export class TaskController {
                 })
                 return {data: createdTask}
             })
+            .catch(() => ({ error: { message: ErrorConstantEnum.CREATED_ID_ALREADY_USE } }));
+    }
+
+    @Post('/update')
+    updateTask(@Body() updatedTask: TaskDto): Promise<DataModel<TaskDto>> {
+        return this.taskService.getTaskById(updatedTask.id)
+            .then((task: TaskDto) => task
+                ? this.taskService.updateTaskById(task.id, {...task, ...updatedTask})
+                : Promise.reject())
+            .then((processedTask: TaskDto) => {
+                !processedTask.completed && this.estimateQueue.add( 'predictEstimate',{
+                    task: processedTask
+                })
+                return {data: processedTask}
+            })
+            .catch(() => ({ error: { message: ErrorConstantEnum.UPDATED_ERROR } }));
     }
 
     @Post('/create/jira')
     createTaskFromJira(@Body() newTask: JiraIntegrationTaskDto): Promise<DataModel<TaskDto>> {
-        this.JIRA_AUTOMATION = newTask;
         return this.taskService.integrationTaskIsUnique(newTask.id)
             .then((isUnique: boolean) => isUnique
                 ? this.taskService.createTask(this.taskService.convertJiraTaskToTask(newTask))
                 : Promise.reject())
             .then((createdTask: TaskDto) => {
-                this.estimateQueue.add( 'predictEstimate', {
+                !createdTask.completed && this.estimateQueue.add( 'predictEstimate', {
                     task: createdTask
                 })
                 return {data: createdTask}
             })
             .catch(() => ({ error: { message: ErrorConstantEnum.INTEGRATION_ID_ALREADY_USE } }));
+    }
+
+    @Post('/update/jira')
+    updateTaskFromJira(@Body() updatedTask: JiraIntegrationTaskDto): Promise<DataModel<TaskDto>> {
+        return this.taskService.getTaskByIntegrationId(TaskService.getJiraInternalId(updatedTask))
+            .then((task: TaskDto) => task
+                ? this.taskService.updateTaskById(task.id, {...task, ...this.taskService.convertJiraTaskToTask(updatedTask)})
+                : Promise.reject())
+            .then((processedTask: TaskDto) => {
+                !processedTask.completed && this.estimateQueue.add( 'predictEstimate', {
+                    task: processedTask
+                })
+                return {data: processedTask}
+            })
+            .catch(() => ({ error: { message: ErrorConstantEnum.UPDATED_ERROR } }));
     }
 
     @Get('/train')
