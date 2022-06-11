@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { TaskDto } from './dto/task.dto';
 import { DataModel } from '../../models/data.model';
 import { TaskService } from './task.service';
@@ -18,35 +18,53 @@ export class TaskController {
 
     private JIRA_AUTOMATION;
 
-    @Post('/create')
-    setState(@Body() newTask: TaskDto): any {
-        this.JIRA_AUTOMATION = newTask;
-        return newTask;
-    }
-
     @Get()
     getState(): any {
         return this.JIRA_AUTOMATION
     }
 
+    @Get('/task/:id')
+    getTaskById(@Param('id') id: string): Promise<TaskDto> {
+        console.log('get by id');
+        return this.taskService.getTaskById(id)
+    }
+
     @Post('/create')
     createTask(@Body() newTask: TaskDto): Promise<DataModel<TaskDto>> {
-        return this.taskService.createTask(newTask)
-            .then((createdTask: TaskDto) => ({data: createdTask}))
+        return this.taskService.taskIsUnique(newTask.id)
+            .then((isUnique: boolean) => isUnique
+                ? this.taskService.createTask(newTask)
+                : Promise.reject())
+            .then((createdTask: TaskDto) => {
+                !createdTask.completed && this.estimateQueue.add( 'predictEstimate',{
+                    task: createdTask
+                })
+                return {data: createdTask}
+            })
     }
 
     @Post('/create/jira')
     createTaskFromJira(@Body() newTask: JiraIntegrationTaskDto): Promise<DataModel<TaskDto>> {
+        this.JIRA_AUTOMATION = newTask;
         return this.taskService.integrationTaskIsUnique(newTask.id)
             .then((isUnique: boolean) => isUnique
                 ? this.taskService.createTask(this.taskService.convertJiraTaskToTask(newTask))
                 : Promise.reject())
             .then((createdTask: TaskDto) => {
-                !createdTask.completed && this.estimateQueue.add( {
+                this.estimateQueue.add( 'predictEstimate', {
                     task: createdTask
                 })
                 return {data: createdTask}
             })
             .catch(() => ({ error: { message: ErrorConstantEnum.INTEGRATION_ID_ALREADY_USE } }));
     }
+
+    @Get('/train')
+    trainModel(@Query() modelType): Promise<any> {
+        console.log('train controller')
+        return this.estimateQueue.add('trainModel', {
+            modelType: modelType?.modelType
+        })
+    }
+
 }

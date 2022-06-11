@@ -7,7 +7,6 @@ import { UserModule } from './modules/user/user.module';
 import { TaskModule } from './modules/task/task.module';
 import { BullModule } from '@nestjs/bull';
 
-
 @Module({
     imports: [
         ConfigModule.forRoot(),
@@ -29,7 +28,7 @@ import { BullModule } from '@nestjs/bull';
             },
         }),
         UserModule,
-        TaskModule
+        TaskModule,
     ],
     controllers: [AppController],
     providers: [AppService],
