@@ -5,7 +5,7 @@ import { DatasetColumnsKey, NORMALIZE_MAX, NORMALIZE_MIN } from '../../constants
 import { RandomForestRegression as RFRegression } from 'ml-random-forest';
 import { v4 as uuidv4 } from 'uuid';
 import { TaskService } from '../task/task.service';
-import { ModelDto } from './dto/model.dto';
+import { ModelDto, ModelTypesEnum } from './dto/model.dto';
 import { TaskDto } from '../task/dto/task.dto';
 import { TaskEntity } from '../task/entities/task-entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,9 +13,8 @@ import { Repository } from 'typeorm';
 import { ModelEntity } from './entities/model-entity';
 import { ModelVariablesEntity } from './entities/model-variables.entity';
 import { ModelVariablesDto } from './dto/model-variables.dto';
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const KNN = require("ml-knn/lib/index.js")
+const MLR = require("ml-regression-multivariate-linear/lib/index.js");
 
 @Injectable()
 export class ModelService {
@@ -162,7 +161,7 @@ export class ModelService {
         })
     }
 
-    public createNewModel(modelType = 'randomForest'): void {
+    public createNewModel(modelType: ModelTypesEnum): void {
         this.labels = [];
         this.dataset = [];
         this.datasetContract = [];
@@ -229,15 +228,25 @@ export class ModelService {
         })
     }
 
-    private trainModel(modelType: string): Promise<ModelDto> {
+    private trainModel(modelType: ModelTypesEnum): Promise<ModelDto> {
         const options = {
             seed: 42,
             replacement: true,
             nEstimators: 100
         };
 
-        const regression = new RFRegression(options);
-        regression.train(this.dataset, this.labels);
+        let regression;
+        switch (modelType) {
+            case ModelTypesEnum.RANDOM_FOREST: {
+                regression = new RFRegression(options);
+                regression.train(this.dataset, this.labels);
+                break;
+            }
+            case ModelTypesEnum.LINEAR_REGRESSION: {
+                regression = new MLR(this.dataset, [this.labels], { intercept: true });
+                break;
+            }
+        }
 
         return this.getNextModelVersion(modelType)
             .then((newVersion: number) => {
