@@ -33,9 +33,9 @@ export class TaskService {
         }).then(() => this.getTaskById(id));
     }
 
-    public integrationTaskIsUnique(internalId: string | number): Promise<boolean> {
+    public integrationTaskIsUnique(id: string | number): Promise<boolean> {
         return this.tasksRepository
-            .findOne({ where: { internalSystemId: internalId } })
+            .findOne({ where: { externalSystemId: id } })
             .then((task: TaskEntity) => !task)
     }
 
@@ -49,8 +49,8 @@ export class TaskService {
         return this.tasksRepository.findOne(id)
     }
 
-    public getTaskByIntegrationId(internalId: string): Promise<TaskDto> {
-        return this.tasksRepository.findOne({ where: { internalSystemId: internalId } })
+    public getTaskByIntegrationId(id: string): Promise<TaskDto> {
+        return this.tasksRepository.findOne({ where: { externalSystemId: id } })
     }
 
     public updateTaskById(id: string, newData: TaskDto): Promise<TaskDto> {
