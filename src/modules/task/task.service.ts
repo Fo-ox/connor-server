@@ -15,10 +15,12 @@ export class TaskService {
 
     public createTask(newTask: TaskDto): Promise<TaskDto> {
         const id: string = uuidv4();
+        console.log(newTask)
         return this.tasksRepository.insert({
             ...newTask,
             id: id,
         }).then(() => {
+            console.log('success insert')
             return this.getTaskById(id)
         });
     }

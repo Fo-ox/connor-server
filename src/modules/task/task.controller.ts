@@ -81,11 +81,13 @@ export class TaskController {
 
     @Post('/create/jira')
     createTaskFromJira(@Body() newTask: JiraIntegrationTaskDto): Promise<DataModel<TaskDto>> {
+        console.log('create start');
         return this.taskService.integrationTaskIsUnique(newTask.id)
             .then((isUnique: boolean) => isUnique
                 ? this.taskService.createTask(this.taskService.convertJiraTaskToTask(newTask))
                 : Promise.reject())
             .then((createdTask: TaskDto) => {
+                console.log('im in estimate')
                 this.modelService.getDefaultModel()
                     .then((model: ModelDto) => model
                         && !createdTask.completed
