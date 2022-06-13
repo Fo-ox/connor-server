@@ -34,12 +34,13 @@ export class ModelService {
 
     public getModelVariable(): Promise<ModelVariablesDto> {
         return this.modelVariablesRepository.find()
-            .then((modelVariables: ModelVariablesDto[]) => modelVariables.length
-                ? modelVariables[0]
-                : this.modelVariablesRepository.insert({
-                    defaultModelId: null
-                }).then(() => this.getModelVariable())
-            );
+            .then((modelVariables: ModelVariablesDto[]) => {
+                return modelVariables.length
+                    ? modelVariables[0]
+                    : this.modelVariablesRepository.insert({
+                        defaultModelId: null
+                    }).then(() => this.getModelVariable())
+            });
     }
 
     public setModelVariable(newVariablesState: ModelVariablesDto): Promise<ModelVariablesDto> {
@@ -84,7 +85,9 @@ export class ModelService {
 
     public getDefaultModel(): Promise<ModelDto> {
         return this.getModelVariable()
-            .then((variables: ModelVariablesDto) => this.getModelById(variables.defaultModelId))
+            .then((variables: ModelVariablesDto) => {
+                return this.getModelById(variables.defaultModelId)
+            })
     }
 
     public getFullDefaultModel(): Promise<ModelDto> {
@@ -93,16 +96,26 @@ export class ModelService {
     }
 
     public getModelById(id: string): Promise<ModelDto> {
-        return Promise.resolve(true)
-            .then(() => this.modelsState?.[id])
-            .then((findModel: ModelDto) => findModel
-                ? {
+        const findModel = this.modelsState[id];
+        if (findModel) {
+            return Promise.resolve(true)
+                .then(() => ({
                     id: findModel.id,
                     type: findModel.type,
                     version: findModel.version
-                }
-                : null
-            )
+                }));
+        }
+
+        return this.modelsRepository.findOne(id)
+            .then((model: ModelEntity) => ({
+                id: model.id,
+                type: model.type,
+                version: model.version
+            }))
+            .then((model: ModelDto) => {
+                model && (this.modelsState[model.id] = model)
+                return model
+            })
     }
 
     public predictEstimate(task: TaskDto): void {
