@@ -80,42 +80,19 @@ export class ModelService {
 
     public setDefaultModel(defaultId: string): Promise<ModelDto> {
         return this.setModelVariable({defaultModelId: defaultId})
-            .then((variables: ModelVariablesDto) => this.getModelById(variables.defaultModelId))
+            .then((variables: ModelVariablesDto) => this.getFullModelById(variables.defaultModelId))
     }
 
     public getDefaultModel(): Promise<ModelDto> {
         return this.getModelVariable()
             .then((variables: ModelVariablesDto) => {
-                return this.getModelById(variables.defaultModelId)
+                return this.getFullModelById(variables.defaultModelId)
             })
     }
 
     public getFullDefaultModel(): Promise<ModelDto> {
         return this.getModelVariable()
             .then((variables: ModelVariablesDto) => this.getFullModelById(variables.defaultModelId))
-    }
-
-    public getModelById(id: string): Promise<ModelDto> {
-        const findModel = this.modelsState[id];
-        if (findModel) {
-            return Promise.resolve(true)
-                .then(() => ({
-                    id: findModel.id,
-                    type: findModel.type,
-                    version: findModel.version
-                }));
-        }
-
-        return this.modelsRepository.findOne(id)
-            .then((model: ModelEntity) => ({
-                id: model.id,
-                type: model.type,
-                version: model.version
-            }))
-            .then((model: ModelDto) => {
-                model && (this.modelsState[model.id] = model)
-                return model
-            })
     }
 
     public predictEstimate(task: TaskDto): void {
@@ -279,7 +256,7 @@ export class ModelService {
                     .then(() => this.modelsState[model.id] = model)
                     .then(() => this.getDefaultModel()
                         .then((defaultModel: ModelDto) => !defaultModel?.id && this.setDefaultModel(model.id)))
-                    .then(() => this.getModelById(model.id))
+                    .then(() => this.getFullModelById(model.id))
             })
     }
 }

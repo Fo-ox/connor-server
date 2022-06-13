@@ -35,7 +35,11 @@ export class ModelController {
     @Get('/models')
     getModels(): Promise<DataModel<ModelDto[]>> {
         return this.modelService.getModels()
-            .then((models: ModelDto[]) => ({data: models}));
+            .then((models: ModelDto[]) => ({data: models.map((model: ModelDto) => ({
+                id: model.id,
+                type: model.type,
+                version: model.version
+            }))}));
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -48,7 +52,11 @@ export class ModelController {
                     : Promise.reject())
                 .catch(() => ({ error: { message: ErrorConstantEnum.ERROR_SET_DEFAULT_MODEL } }))
             : this.modelService.getDefaultModel()
-                .then((model) => ({data: model}))
+                .then((model) => ({data: {
+                    id: model.id,
+                    type: model.type,
+                    version: model.version
+                }}))
     }
 
     @UseGuards(AuthGuard('jwt'))
