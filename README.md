@@ -1,73 +1,37 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# Архитектура серверной части
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<img width="777" alt="Снимок экрана 2024-09-15 в 20 35 12" src="https://github.com/user-attachments/assets/2c953183-5c4c-4e12-ac22-5e3b8d2a46f8">
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## API
+### User controller
+GET: /user/authorise Содержит два обязательных query параметра ’login’ и ’password’, в случае успешной операции формирует JWT токен для пользователя системы и возвра- щает в ответе. В случае ошибки возвращает предупреждение.
 
-## Description
+GET: /user/users Возвращает всех пользователей системы.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+GET: /user/user Содержит обязательный query параметр ’id’ и возвращает в случае успеха данные по запрошенному пользователю.
 
-## Installation
+POST: /user/create Запрос на создание нового пользователя системы. В случае успеха возвращает созданного пользователя. Валидирует логин на уникальность и не позволяет создать пользователя с аналогичным логином. Если в запросе был указан internalSystemId, в случае нахождения среди пользователей системы, пользователя созданного путем интеграции с другой системы и не содержащего логин и пароль - объединит такие аккаунты в один.
 
-```bash
-$ npm install
-```
+POST: /user/create Запрос на создание обновление данных пользователя системы. В случае успеха возвращает обновленные данные пользователя. Если в запросе был указан internalSystemId, в случае нахождения среди пользователей системы, пользователя созданного путем интеграции с другой системы и не содержащего логин и пароль - объединит такие аккаунты в один.
 
-## Running the app
+### Task controller
+GET: /task/tasks Возвращает все задачи в системе. Имеет необязательный query параметр ’filter’, возвращающий задачи с фильтрацией по заданному условию.
 
-```bash
-# development
-$ npm run start
+GET: /task/task Содержит обязательный query параметр ’id’ и возвращает в случае успеха данные по запрошенной задаче.
 
-# watch mode
-$ npm run start:dev
+POST: /task/create Запрос на создание задачи. После успешного сохранению в базу данных, если задача не находится в завершенном состоянии, отправляется асинхронный запрос в redis на расчет оценки времени для этой задачи.
 
-# production mode
-$ npm run start:prod
-```
+POST: /task/create/jira Запрос на создание задачи по специальной модели сущности jira-API. После успешного сохранению в базу данных, если задача не находится в завершенном состоянии, отправляется асинхронный запрос в redis на расчет оценки времени для этой задачи.
 
-## Test
+POST: /task/update Запрос на обновление задачи. После успешного сохранению в базу данных, если задача не находится в завершенном состоянии, отправляется асинхронный запрос в redis на расчет оценки времени для этой задачи.
 
-```bash
-# unit tests
-$ npm run test
+POST: /task/create/jira Запрос обновление задачи по специальной модели сущности jira-API. После успешного сохранению в базу данных, если задача не находится в завершенном состоянии, отправляется асинхронный запрос в redis на расчет оценки вре- мени для этой задачи.
 
-# e2e tests
-$ npm run test:e2e
+### Model controller
+GET: /model/models Возвращает все обученные модели системы.
 
-# test coverage
-$ npm run test:cov
-```
+GET: /model/defaultModel Содержит обязательный query параметр ’id’, использует модель с выбранным id для рассчета времени задач.
 
-## Support
+GET: /model/train Содержит обязательный query параметр ’modelType’. При выполнении запроса model-controller отправляет асинхронный запрос в redis на обучение новой версии модели с заданным типом.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+GET: /model/predict Содержит обязательный query параметр ’taskId’. При выполнении запроса model-controller отправляет асинхронный запрос в redis для расчета времени выполнения задачи.
