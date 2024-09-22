@@ -45,18 +45,18 @@ export class ModelController {
     @UseGuards(AuthGuard('jwt'))
     @Get('/defaultModel')
     getDefaultModel(@Query() params): Promise<DataModel<ModelDto>> {
-        return params.id
+        return params?.id
             ? this.modelService.setDefaultModel(params.id)
                 .then((model: ModelDto) => model
                     ? {data: model}
                     : Promise.reject())
                 .catch(() => ({ error: { message: ErrorConstantEnum.ERROR_SET_DEFAULT_MODEL } }))
             : this.modelService.getDefaultModel()
-                .then((model) => ({data: {
+                .then((model) => (model ? {data: {
                     id: model.id,
                     type: model.type,
                     version: model.version
-                }}))
+                }} : null))
     }
 
     @UseGuards(AuthGuard('jwt'))

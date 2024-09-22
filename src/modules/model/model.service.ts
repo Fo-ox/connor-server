@@ -65,13 +65,15 @@ export class ModelService {
             return Promise.resolve(true).then(() => findModel)
         }
         return this.modelsRepository.findOne(modelId)
-            .then((model: ModelEntity) => ({
-                id: model.id,
-                type: model.type,
-                version: model.version,
-                datasetContract: JSON.parse(model.datasetContract),
-                modelInstance: RFRegression.load(JSON.parse(model.modelInstance)),
-            }))
+            .then((model: ModelEntity) => (model
+                ? {
+                    id: model.id,
+                    type: model.type,
+                    version: model.version,
+                    datasetContract: JSON.parse(model.datasetContract),
+                    modelInstance: RFRegression.load(JSON.parse(model.modelInstance)),
+                }
+                : null))
             .then((model: ModelDto) => {
                 model && (this.modelsState[model.id] = model)
                 return model
@@ -122,6 +124,26 @@ export class ModelService {
             })
     }
 
+    public createNewModel(modelType: ModelTypesEnum): void {
+        this.labels = [];
+        this.dataset = [];
+        this.datasetContract = [];
+
+        this.tasksService.getAllTasks()
+            .then((tasks: TaskEntity[]) => {
+                this.userService.getAllUsers()
+                    .then((users: SecurityUserDto[]) => {
+
+                        this.buildDataset(tasks, users);
+                        this.trainModel(modelType);
+                    })
+            })
+    }
+
+    public normalizeValue(value: number): number {
+        return +((value - NORMALIZE_MIN) / (NORMALIZE_MAX - NORMALIZE_MIN)).toFixed(10)
+    }
+
     private convertTaskToModelContract(task: TaskDto, user: SecurityUserDto, contract: string[]): number[] {
         if (!task || !user || !contract?.length) {
             return;
@@ -149,26 +171,6 @@ export class ModelService {
             })
             return ++lastVersion;
         })
-    }
-
-    public createNewModel(modelType: ModelTypesEnum): void {
-        this.labels = [];
-        this.dataset = [];
-        this.datasetContract = [];
-
-        this.tasksService.getAllTasks()
-            .then((tasks: TaskEntity[]) => {
-                this.userService.getAllUsers()
-                    .then((users: SecurityUserDto[]) => {
-
-                        this.buildDataset(tasks, users);
-                        this.trainModel(modelType);
-                    })
-            })
-    }
-
-    public normalizeValue(value: number): number {
-        return +((value - NORMALIZE_MIN) / (NORMALIZE_MAX - NORMALIZE_MIN)).toFixed(10)
     }
 
     private buildDataset(tasks: TaskEntity[], users: SecurityUserDto[]): void {
@@ -253,10 +255,10 @@ export class ModelService {
                     modelInstance: JSON.stringify(regression.toJSON()),
                     datasetContract: JSON.stringify(model.datasetContract)
                 })
-                    .then(() => this.modelsState[model.id] = model)
+                    .then(() => model && (this.modelsState[model.id] = model))
                     .then(() => this.getDefaultModel()
-                        .then((defaultModel: ModelDto) => !defaultModel?.id && this.setDefaultModel(model.id)))
-                    .then(() => this.getFullModelById(model.id))
+                        .then((defaultModel: ModelDto) => !defaultModel?.id && this.setDefaultModel(model?.id)))
+                    .then(() => this.getFullModelById(model?.id))
             })
     }
 }

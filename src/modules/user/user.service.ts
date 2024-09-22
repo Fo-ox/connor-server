@@ -27,7 +27,7 @@ export class UserService {
     public authorise(login: string, password: string): Promise<SecurityUserDto & Token> {
         return this.usersRepository
             .findOne({ where: { login: login } })
-            .then((user: UserEntity) => bcrypt.compare(password, user.password)
+            .then((user: UserEntity) => user && bcrypt.compare(password, user.password)
                 .then((accept: boolean) => accept
                     ? {...UserService.getSecurityUser(user), ...this.getToken(user.id)}
                     : null

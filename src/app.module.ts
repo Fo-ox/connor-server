@@ -5,8 +5,9 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './modules/user/user.module';
 import { TaskModule } from './modules/task/task.module';
-import { BullModule } from '@nestjs/bull';
 import { ModelModule } from './modules/model/model.module';
+import * as process from 'node:process';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
     imports: [
@@ -14,18 +15,15 @@ import { ModelModule } from './modules/model/model.module';
         TypeOrmModule.forRoot({
             url: process.env.DATABASE_URL,
             type: 'postgres',
-            ssl: {
-                rejectUnauthorized: false,
-            },
+            ssl: false,
             entities: ['dist/**/*.entity{.ts,.js}'],
             synchronize: true, // This for development
             autoLoadEntities: true,
         }),
         BullModule.forRoot({
             redis: {
-                host: 'redis-19686.c14.us-east-1-2.ec2.cloud.redislabs.com',
-                port: 19686,
-                password: 'xKHIgEzdIDPt5n8lJsS8LzJSOTSv1cFt'
+                host: process.env.REDIS_URL,
+                port: 6379
             },
         }),
         UserModule,
@@ -35,4 +33,8 @@ import { ModelModule } from './modules/model/model.module';
     controllers: [AppController],
     providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+    constructor() {
+        console.log(process.env);
+    }
+}

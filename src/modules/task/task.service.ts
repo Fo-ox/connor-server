@@ -15,7 +15,7 @@ export class TaskService {
 
     public createTask(newTask: TaskDto): Promise<TaskDto> {
         const id: string = uuidv4();
-        return this.tasksRepository.insert({
+        return this.tasksRepository.save({
             ...newTask,
             id: id,
         }).then(() => {
